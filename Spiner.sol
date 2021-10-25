@@ -65,9 +65,14 @@ contract Spiner is Ownable {
         }
         _;
     }
-    function buySlot(address _nftAddress, uint256 _tokenId) public{
+    function buyExtraSpin(address _nftAddress, uint256 _tokenId,uint256 _amount) public{
         require(ERC721(_nftAddress).ownerOf(_tokenId) == _msgSender(), "not own");
+        require(_amount>0,"amount >0");
         uint256 vId = getVId(_nftAddress, _tokenId);
+        uint256 rank = getRank(_nftAddress,_tokenId);
+        uint256 level = getLevel(_nftAddress,_tokenId);
+        uint256 price = 150+(rank-1)*75+(level-1)*(rank+1)*15;
+        ganToken.transferFrom(_msgSender(),manager.feeAddress(),price.mul(_amount).mul(10**18));
         paidSpin[vId] = paidSpin[vId].add(1);
     }
     function getVId(address _nftAddress,uint256 _tokenId) private pure returns(uint256){
@@ -87,6 +92,18 @@ contract Spiner is Ownable {
 
     function setERC20(address _ganERC20) public onlyOwner {
         ganToken = IGalacticArenaERC20(_ganERC20);
+    }
+    function getPaidSpin(address _nftAddress,uint256 _tokenId) public view returns(uint256){
+          uint256 vId = getVId(_nftAddress, _tokenId);
+          return paidSpin[vId];
+    }
+    function getFlipCard(address _nftAddress,uint256 _tokenId) public view returns(uint256){
+          uint256 vId = getVId(_nftAddress, _tokenId);
+          return flipCards[vId];
+    }
+     function getfreeSpinTimeOut(address _nftAddress,uint256 _tokenId) public view returns(uint256){
+          uint256 vId = getVId(_nftAddress, _tokenId);
+          return freeSpinTimeOut[vId];
     }
     function getMaxSpinPerDay(uint256 _rank) private pure returns(uint256){
         return _rank+3;

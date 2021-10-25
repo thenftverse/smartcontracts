@@ -39,20 +39,17 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
         _approve(address(this), address(apeswapV2Router), ~uint256(0));
         
     }
-    modifier onlyFarmOwners() {
-        require(manager.farmOwners(_msgSender()), "you're not farmer");
+   
+
+    modifier onlyOperator() {
+        require(manager.isOperator(_msgSender()), "you're not operator");
         _;
     }
-
-    modifier onlyEvolver() {
-        require(manager.evolvers(_msgSender()), "you're not evolver");
-        _;
-    }
-
+ 
     function setManager(address _manager) public onlyOwner {
         manager = ManagerInterface(_manager);
     }
-    function farm(address recipient, uint256 amount) external onlyFarmOwners {
+    function farm(address recipient, uint256 amount) external onlyOperator {
         require(amountFarm > farmReward, "Over cap farm");
         require(recipient != address(0), "invalid address");
         require(amount > 0, "amount > 0");
@@ -66,8 +63,8 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
         }
     }
 
-    function win(address winner, uint256 reward) external onlyEvolver {
-        require(playToEarnReward > amountPlayToEarn, "Over cap earn");
+    function win(address winner, uint256 reward) external onlyOperator {
+        require(playToEarnReward < amountPlayToEarn, "Over cap earn");
         require(winner != address(0), "invalid address");
         require(reward > 0, "reward > 0");
 

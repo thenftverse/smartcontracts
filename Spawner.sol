@@ -21,6 +21,8 @@ contract Spawner is Ownable {
     GalacticArenaNFT public ganNFT;
     IERC20 public ganERC20;
     IRef public ref;
+    uint256 public priceHero;
+    uint256 public priceBox;
     constructor(
         address _manager,
         address _ganERC20,
@@ -44,10 +46,16 @@ contract Spawner is Ownable {
     function setERC20(address _ganERC20) public onlyOwner {
         ganERC20 = IERC20(_ganERC20);
     }
-
+    function setPriceBox(uint256 _price) public onlyOwner{
+        priceBox = _price;
+    }
+    function setPriceHero(uint256 _price) public onlyOwner{
+        priceHero = _price;
+    }
+    
     function lay(uint256 _amount) external {
         require(_amount > 0, "dont accept 0 amount");
-        uint256 totalFee = manager.priceEgg().mul(_amount);
+        uint256 totalFee = priceBox.mul(_amount);
         address refAccount = ref.getReferences(_msgSender());
         if(refAccount!=address(0)){
             uint feeCommission = totalFee.mul(manager.commissionRateEgg()).div(100);
@@ -73,7 +81,7 @@ contract Spawner is Ownable {
         emit Evolve(_tokenId, _msgSender(), dna);
     }
     function buyHero(GalacticArenaNFT.Tribe _tribe) public{
-        uint256 totalFee = manager.priceEgg();
+        uint256 totalFee = priceHero;
         address refAccount = ref.getReferences(_msgSender());
         if(refAccount!=address(0)){
             uint feeCommission = totalFee.mul(manager.commissionRateEgg()).div(100);

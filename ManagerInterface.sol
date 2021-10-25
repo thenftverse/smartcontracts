@@ -3,10 +3,11 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 interface ManagerInterface {
-    function battlefields(address _address) external view returns (bool);
+    
+    function isOperator(address _address) external view returns (bool);
 
-    function evolvers(address _address) external view returns (bool);
-
+    function isNftVisit(address _address) external view returns (bool);
+    
     function markets(address _address) external view returns (bool);
 
     function farmOwners(address _address) external view returns (bool);
@@ -40,4 +41,8 @@ interface ManagerInterface {
     function commissionRateEgg() external view returns(uint256);
     
     function commissionRateMarket() external view returns(uint256);
+
+    function nftStakingAmount() external view returns(uint256);
+    
+    function minBalanceToPvP() external view returns(uint256);
 }

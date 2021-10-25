@@ -73,7 +73,7 @@ contract Spiner is Ownable {
         uint256 level = getLevel(_nftAddress,_tokenId);
         uint256 price = 150+(rank-1)*75+(level-1)*(rank+1)*15;
         ganToken.transferFrom(_msgSender(),manager.feeAddress(),price.mul(_amount).mul(10**18));
-        paidSpin[vId] = paidSpin[vId].add(1);
+        paidSpin[vId] = paidSpin[vId].add(_amount);
     }
     function getVId(address _nftAddress,uint256 _tokenId) private pure returns(uint256){
         return uint256(uint160(_nftAddress)).add(_tokenId);
@@ -89,7 +89,6 @@ contract Spiner is Ownable {
     function setNFT(address _ganNFT) public onlyOwner {
         ganNFT = GalacticArenaNFT(_ganNFT);
     }
-
     function setERC20(address _ganERC20) public onlyOwner {
         ganToken = IGalacticArenaERC20(_ganERC20);
     }
@@ -197,7 +196,9 @@ contract Spiner is Ownable {
             if(freeSpin[vId]==getMaxSpinPerDay(rank)){
                 freeSpin[vId]=0;
                 freeSpinTimeOut[vId] = block.timestamp + 86400;
-                visitNFT.stakingTimeOutBegin(_nftAddress,_tokenId);
+                if(_nftAddress!=address(ganNFT)){
+                    visitNFT.stakingTimeOutBegin(_nftAddress,_tokenId);
+                }
             } 
         }
     }

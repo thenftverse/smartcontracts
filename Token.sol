@@ -54,10 +54,13 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
         require(recipient != address(0), "invalid address");
         require(amount > 0, "amount > 0");
 
-        farmReward = farmReward.add(amount);
-        if (farmReward <= amountFarm) _mint(recipient, amount);
+        
+        if (farmReward.add(amount) <= amountFarm){
+            farmReward = farmReward.add(amount);
+           _mint(recipient, amount);   
+        }
         else {
-            uint256 availableReward = farmReward.sub(amountFarm);
+            uint256 availableReward = amountFarm.sub(farmReward);
             _mint(recipient, availableReward);
             farmReward = amountFarm;
         }
@@ -67,11 +70,13 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
         require(playToEarnReward < amountPlayToEarn, "Over cap earn");
         require(winner != address(0), "invalid address");
         require(reward > 0, "reward > 0");
-
-        playToEarnReward = playToEarnReward.add(reward);
-        if (playToEarnReward <= amountPlayToEarn) _mint(winner, reward);
+        if (playToEarnReward.add(reward) <= amountPlayToEarn){
+            playToEarnReward = playToEarnReward.add(reward);
+            _mint(winner, reward);   
+          
+        }
         else {
-            uint256 availableReward = playToEarnReward.sub(amountPlayToEarn);
+            uint256 availableReward = amountPlayToEarn.sub(playToEarnReward);
             _mint(winner, availableReward);
             playToEarnReward = amountPlayToEarn;
         }

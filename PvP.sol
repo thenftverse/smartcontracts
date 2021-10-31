@@ -80,7 +80,14 @@ contract PVP is
         nftIdBlacklist[vId] = _value;
     }
     function getVId(address _nftAddress,uint256 _tokenId) private pure returns(uint256){
-        return uint256(uint160(_nftAddress)).add(_tokenId);
+        return uint256(
+            keccak256(
+                abi.encodePacked(
+                    _nftAddress,
+                    _tokenId
+                )
+            )
+        );
     }
     function createMatch(uint256 _tokenId,address _nftAddress, uint256 _amount,address _currency) payable public {
         require(tx.origin==_msgSender(),"don't try to cheat");

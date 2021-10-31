@@ -29,7 +29,8 @@ contract PVP is
         address owner,
         uint256 newAmount
     );
-    event Fight(uint256 indexed tokenId1, address owner1,uint256 indexed tokenId2, address owner2);
+    event Fight1(address indexed nftAddress1, uint256 indexed tokenId1, address owner1,address nftAddress2,uint256 tokenId2, address owner2,uint256 indexed result,uint256 reward, address currency);
+    event Fight2(address nftAddress1, uint256 tokenId1, address owner1,address indexed nftAddress2,uint256 indexed tokenId2, address owner2,uint256  result,uint256 reward, address currency);
 
     struct ItemMatch {
         uint256 tokenId;
@@ -39,11 +40,13 @@ contract PVP is
         address nftAddress;
         address currency;
     }
+   
     mapping(uint256 => ItemMatch) internal arena;
     EnumerableSet.UintSet private tokensInArena;
     mapping(address => EnumerableSet.UintSet) private fighterTokens;
     mapping(address => bool) private userBlacklist;
     mapping(uint256 => bool) private nftIdBlacklist;
+    
     ManagerInterface public manager;
     IERC20 public ganERC20;
     GalacticArenaNFT public ganNFT;
@@ -99,10 +102,10 @@ contract PVP is
         require(userBlacklist[_msgSender()] == false, "user blacklisted");
         require(nftIdBlacklist[vId] == false, "nft blacklisted");
         require(!tokensInArena.contains(vId),"nft already in the arena");
-        require(!fighterTokens[_msgSender()].contains(vId));
+        require(!fighterTokens[_msgSender()].contains(vId),"nft already in the arena 2");
         tokensInArena.add(vId);
         fighterTokens[_msgSender()].add(vId);
-        ERC721(_nftAddress).transferFrom(_msgSender(),address(this), _tokenId);
+        // ERC721(_nftAddress).transferFrom(_msgSender(),address(this), _tokenId);
         arena[vId] = ItemMatch({
                 tokenId: _tokenId,
                 owner: _msgSender(),
@@ -125,7 +128,7 @@ contract PVP is
         else{
             IERC20(itemMatch.currency).transfer(itemMatch.owner, itemMatch.amount);
         }
-        removeMatch(_nftAddress, _tokenId);
+        removeMatch(itemMatch.owner, _nftAddress, _tokenId);
         emit CancelMatch(_tokenId, _msgSender());
     }
 
@@ -172,26 +175,33 @@ contract PVP is
             IERC20(itemMatch.currency).transferFrom(_msgSender(), address(this), amountBet2);
         }
         //
+        processReward(_tokenId,_nftAddress,_ownTokenId,_ownNftAddress,finalWinRate1,amountBet2,reward,itemMatch);
+        //
+        removeMatch(itemMatch.owner, _nftAddress,_tokenId);
+        //
+    }
+    function processReward(uint256 _tokenId,address _nftAddress,uint256 _ownTokenId,address _ownNftAddress,uint256 finalWinRate1, uint256 amountBet2, uint256 reward,ItemMatch storage itemMatch ) internal {
         uint256 rnd = random(_tokenId, 4).div(100);
-        if(rnd>=finalWinRate1){ //Challenger win
+        if(rnd<finalWinRate1){ //Challenger win
             uint256 fightFeeRate = getFightFeeRate(_tokenId, _nftAddress);
             uint256 fee = amountBet2.mul(fightFeeRate).div(1000);
             uint256 netReward = reward.sub(fee);
             finallyMatch(itemMatch, itemMatch.owner, netReward, fee);
-            
+            //
+            emit Fight1(_nftAddress, _tokenId, itemMatch.owner,_ownNftAddress,_ownTokenId, _msgSender(),1,netReward, itemMatch.currency);
+            emit Fight2(_nftAddress, _tokenId, itemMatch.owner,_ownNftAddress,_ownTokenId, _msgSender(),1,netReward, itemMatch.currency);
         }
         else//Fighter win
         {
             uint256 fightFeeRate = getFightFeeRate(_ownTokenId, _ownNftAddress);   
             uint256 fee = itemMatch.amount.mul(fightFeeRate).div(1000);
             uint256 netReward = reward.sub(fee);
-              finallyMatch(itemMatch, _msgSender(), netReward, fee);
+            finallyMatch(itemMatch, _msgSender(), netReward, fee);
+            //
+            emit Fight1(_nftAddress, _tokenId, itemMatch.owner,_ownNftAddress,_ownTokenId, _msgSender(),2,netReward, itemMatch.currency);
+            emit Fight2(_nftAddress, _tokenId, itemMatch.owner,_ownNftAddress,_ownTokenId, _msgSender(),2,netReward, itemMatch.currency);
         }
-        //
-        removeMatch(_nftAddress,_tokenId);
-        //
     }
-
     function finallyMatch(ItemMatch storage itemMatch,address winner,uint256 netReward,uint256 fee) internal{
         if(itemMatch.currency==address(0)){
             payable(itemMatch.owner).transfer(netReward);
@@ -202,12 +212,12 @@ contract PVP is
             IERC20(itemMatch.currency).transfer(manager.feeAddress(), fee);
         }
     }
-    function removeMatch(address _nftAddress,uint256 _tokenId) internal{
+    function removeMatch(address _owner, address _nftAddress,uint256 _tokenId) internal{
         uint256 vId = getVId(_nftAddress, _tokenId);
-        ItemMatch storage itemMatch = arena[vId];
-        ERC721(_nftAddress).transferFrom(address(this),itemMatch.owner, _tokenId);
+        // ItemMatch storage itemMatch = arena[vId];
+        // ERC721(_nftAddress).transferFrom(address(this),itemMatch.owner, _tokenId);
         tokensInArena.remove(vId);
-        fighterTokens[_msgSender()].remove(vId);
+        fighterTokens[_owner].remove(vId);
         arena[vId] = ItemMatch({
             tokenId: 0,
             owner: address(0),

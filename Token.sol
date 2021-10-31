@@ -94,7 +94,6 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
             block.timestamp
         );
     }
-    receive() external payable {}
 
     function setAddressForMarketing(address _addressForMarketing) external onlyOwner {
         require(_addressForMarketing != address(0), "invalid address");

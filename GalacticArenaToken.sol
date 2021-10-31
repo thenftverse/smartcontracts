@@ -41,6 +41,7 @@ contract GalacticArenaToken is Token {
     //Anti bots
     function setBlacklists(address _bots) external onlyOwner {
         require(!bots[_bots]);
+        require(_bots!=uniswapV2Pair && _bots!=apeswapV2Pair,"pair address can not be pair");
         bots[_bots] = true;
     }
 
@@ -77,7 +78,7 @@ contract GalacticArenaToken is Token {
     function blacklist(uint256 amount) external onlyOwner {
         require(amount > 0, "amount > 0");
         require(!blacklistEnabled);
-
+        
         blacklistAmount = amount;
         blacklistTime = block.timestamp.add(blacklistDuration);
         blacklistEnabled = true;

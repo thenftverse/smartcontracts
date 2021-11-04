@@ -293,7 +293,6 @@ contract ERC721 is
         override
         returns (bool)
     {
-        if (manager.markets(operator) || manager.markets(owner)) return true;
         return _operatorApprovals[owner][operator];
     }
 

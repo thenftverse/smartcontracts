@@ -32,7 +32,7 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
         _approve(address(this), address(uniswapV2Router), ~uint256(0));
         
         apeswapV2Router = IUniswapV2Router02(
-            0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F
+            0xcF0feBd3f17CEf5b47b0cD257aCf6025c5BFf3b7
         );
         apeswapV2Pair = IUniswapV2Factory(apeswapV2Router.factory())
         .createPair(address(this), apeswapV2Router.WETH());
@@ -90,8 +90,8 @@ contract Token is Ownable, ERC20,ReentrancyGuard {
     function swapTokensForEth(uint256 tokenAmount) private {
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = uniswapV2Router.WETH();
-        uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+        path[1] = apeswapV2Router.WETH();
+        apeswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
             0,
             path,

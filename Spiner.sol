@@ -134,7 +134,7 @@ contract Spiner is Ownable {
         uint256 trible = rnd % 6;
         if(rnd<20){
             result=1;
-            ganNFT.mintHero(_msgSender(),GalacticArenaNFT.Tribe(trible) , 10**30);
+            ganNFT.mintHero(_msgSender(),GalacticArenaNFT.Tribe(trible) , 10**29);
         }
         else if(rnd<40){
             result=2;

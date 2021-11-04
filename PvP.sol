@@ -81,13 +81,13 @@ contract PVP is
     }
     function getVId(address _nftAddress,uint256 _tokenId) private pure returns(uint256){
         return uint256(
-            keccak256(
-                abi.encodePacked(
-                    _nftAddress,
-                    _tokenId
-                )
-            )
-        );
+                    keccak256(
+                        abi.encodePacked(
+                            _nftAddress,
+                            _tokenId
+                        )
+                    )
+                );
     }
     function createMatch(uint256 _tokenId,address _nftAddress, uint256 _amount,address _currency) payable public {
         require(tx.origin==_msgSender(),"don't try to cheat");
@@ -145,8 +145,26 @@ contract PVP is
         require(tokensInArena.contains(vId), "nft is not in arena");
         ItemMatch storage itemMatch = arena[vId];
         require(itemMatch.owner == _msgSender(), "not own");
+        // require(_amount != itemMatch.amount,"do not waste gas");
+        uint256 difference = 0;
+        address beneficiary = address(this);
+        if(_amount<itemMatch.amount){
+            difference = itemMatch.amount.sub(_amount);
+            beneficiary = itemMatch.owner;
+        }
+        else{
+            difference = _amount.sub(itemMatch.amount);
+            beneficiary = address(this);
+        }
+        if(itemMatch.currency==address(0)){
+                payable(itemMatch.owner).transfer(itemMatch.amount);
+        }
+        else{
+                IERC20(itemMatch.currency).transfer(itemMatch.owner, itemMatch.amount);
+            }
         itemMatch.amount = _amount;
     }
+    
     function getFightFeeRate(uint256 _tokenId,address _nftAddress) private view returns(uint256) {
         if(_nftAddress==address(ganNFT)){
             uint256 rank = ganNFT.getRare(_tokenId);
@@ -157,11 +175,12 @@ contract PVP is
             return 75-rank*5;
         }
     }
+    
     function fight(uint256 _tokenId,address _nftAddress,uint256 _ownTokenId,address _ownNftAddress) public payable {
         require(tx.origin==_msgSender(),"don't try to cheat");
         require(_ownNftAddress==address(ganNFT) || manager.isNftVisit(_ownNftAddress),"NFT not accepted");
         require(ERC721(_ownNftAddress).ownerOf(_ownTokenId) == _msgSender(), "not own");
-         if(_nftAddress!=address(ganNFT)){
+         if(_ownNftAddress!=address(ganNFT)){
             require(ganERC20.balanceOf(_msgSender())>=manager.minBalanceToPvP(),"owner not enough token to PvP");
         }
         uint256 vId = getVId(_nftAddress, _tokenId);
@@ -170,8 +189,8 @@ contract PVP is
         //
         uint256 bonusWinRate1 =  (getLevel(_nftAddress,_tokenId)-1)*2 + (getRank(_nftAddress,_tokenId)-1)*3;
         uint256 bonusWinRate2 =  (getLevel(_ownNftAddress,_ownTokenId)-1)*2 + (getRank(_ownNftAddress,_ownTokenId)-1)*3;
-        uint256 finalWinRate1 = 50 + bonusWinRate1-bonusWinRate2;
-        uint256 finalWinRate2 = 50 + bonusWinRate2- bonusWinRate1;
+        uint256 finalWinRate1 = 50 + bonusWinRate1 - bonusWinRate2;
+        uint256 finalWinRate2 = 50 + bonusWinRate2 - bonusWinRate1;
         //
         uint256 amountBet2 = itemMatch.amount.mul(finalWinRate2).div(finalWinRate1);
         uint256 reward = itemMatch.amount + amountBet2;
@@ -187,6 +206,7 @@ contract PVP is
         removeMatch(itemMatch.owner, _nftAddress,_tokenId);
         //
     }
+    
     function processReward(uint256 _tokenId,address _nftAddress,uint256 _ownTokenId,address _ownNftAddress,uint256 finalWinRate1, uint256 amountBet2, uint256 reward,ItemMatch storage itemMatch ) internal {
         uint256 rnd = random(_tokenId, 4).div(100);
         if(rnd<finalWinRate1){ //Challenger win
